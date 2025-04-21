@@ -6,8 +6,8 @@ license = "MIT"
 repository = "https://github.com/bongkow/ether-link"
 description = "lightweight rust library for ethereum communication"
 readme = "README.md"
-keywords = ["ethereum", "eth-communication"]
-categories = ["cryptography", "authentication", "communication"]
+keywords = ["ethereum", "eth-interaction"]
+categories = ["cryptography", "authentication", "interaction"]
 
 [dependencies]
 k256 = { version = "0.13.4", features = ["ecdsa"] }
