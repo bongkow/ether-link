@@ -6,7 +6,7 @@ license = "MIT"
 repository = "https://github.com/bongkow/ether-link"
 description = "lightweight rust library for ethereum communication"
 readme = "README.md"
-keywords = ["ethereum", "ecdsa", "encryption", "signing", "secp256k1", "rust", "ethereum-communication"]
+keywords = ["ethereum", "ethereum-communication"]
 categories = ["cryptography", "authentication", "communication"]
 
 [dependencies]
