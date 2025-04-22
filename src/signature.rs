@@ -9,7 +9,7 @@ impl EthereumSignature {
         Self { expected_address, signed_message, signature }
     }
     // Verify the signature of a message
-    pub fn verify_ethereum_signature(&self) -> Result<bool, String> {
+    pub fn verify(&self) -> Result<bool, String> {
         use ethers::core::types::{Address, Signature};
         use ethers::utils::hash_message;
         use std::str::FromStr;

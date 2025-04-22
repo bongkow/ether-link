@@ -22,16 +22,18 @@ Ether-Link is specifically designed to facilitate:
 - **Message Signing**: Sign messages using Ethereum's standard signing format
 - **Signature Verification**: Verify message signatures against Ethereum addresses
 - **Timestamped Messages**: Automatic timestamp inclusion to prevent replay attacks
+- **Message Encryption**: End-to-end encryption for messages between Ethereum addresses
+  - EIP-5630 compliant ECIES (Elliptic Curve Integrated Encryption Scheme) implementation
+  - Encrypt messages that only specific Ethereum addresses can decrypt
+  - AES-256-GCM encryption with HKDF key derivation
+- **Message Decryption**: Decrypt messages encrypted with ECIES for your Ethereum address
+- **Custom Key Import**: Create wallets from existing private keys
 
 ## Upcoming Features (Next Version)
 
-- **Message Encryption**: End-to-end encryption for messages between Ethereum addresses
-  - ECIES (Elliptic Curve Integrated Encryption Scheme) implementation
-  - Ability to encrypt messages that only specific Ethereum addresses can decrypt
-  - Support for both text and binary data encryption
-  - Simple API for encrypt/decrypt operations using existing key pairs
 - **Batch Operations**: Ability to sign or verify multiple messages efficiently
 - **Extended Compatibility**: Support for additional Ethereum signature standards and wallets
+- **More Cipher Options**: Support for additional encryption algorithms and modes
 
 ## Installation
 
@@ -39,7 +41,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ether-link = "0.0.3"
+ether-link = "0.0.5"
 ```
 
 ## Usage Examples
@@ -68,6 +70,21 @@ fn main() {
 }
 ```
 
+### Creating a Wallet from Existing Private Key
+
+```rust
+use ether_link::Wallet;
+
+fn main() {
+    // Create a wallet using an existing private key
+    let private_key = "7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d";
+    let wallet = Wallet::with_private_key(Some(private_key));
+    
+    println!("Ethereum Address: {}", wallet.address);
+    // Should print: 0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b
+}
+```
+
 ### Signing a Message
 
 ```rust
@@ -80,6 +97,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let signature_json = wallet.sign_message(message).await?;
     println!("Signature: {}", signature_json);
+    
+    Ok(())
+}
+```
+
+### Encrypting a Message
+
+```rust
+use ether_link::Wallet;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let wallet = Wallet::new();
+    let message = "Secret message for recipient!";
+    let recipient_pubkey = "027a4066efb9f66a65cf5f30c5ccdc7c0cdd9608f699eb3c5da2172ea2f6f579dc"; // Recipient's compressed public key
+    
+    let encrypted = wallet.encrypt_message(message, recipient_pubkey)?;
+    println!("Encrypted: {}", encrypted);
+    
+    Ok(())
+}
+```
+
+### Decrypting a Message
+
+```rust
+use ether_link::Wallet;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let wallet = Wallet::new(); // The recipient's wallet
+    let encrypted_message = "0x0123..."; // Encrypted message from sender
+    
+    let decrypted = wallet.decrypt_message(encrypted_message)?;
+    println!("Decrypted message: {}", decrypted);
     
     Ok(())
 }
@@ -115,7 +165,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Key Components
 
 - `Wallet`: Core structure for generating and managing Ethereum key pairs
+- `new()`: Create a new random wallet
+- `with_private_key()`: Create a wallet from an existing private key
 - `sign_message()`: Async method to sign messages with timestamps for security
+- `encrypt_message()`: Method to encrypt messages for a specific recipient's public key
+- `decrypt_message()`: Method to decrypt messages encrypted for this wallet
 - `EthereumSignature`: Structure to verify signed messages against Ethereum addresses
 
 ## Applications
@@ -125,12 +179,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **dApp Authentication**: Implement authentication flows without passwords
 - **Smart Contract Interaction**: Sign messages intended for on-chain verification
 - **Wallet-to-Wallet Communication**: Enable direct secure messaging between wallet owners
+- **Private Data Exchange**: Exchange encrypted data that only specific Ethereum addresses can access
 
 ## Security Notes
 
 - Private keys are stored in memory as hex strings. Handle with appropriate security measures
 - The library adds timestamps to signed messages by default to prevent replay attacks
 - Always verify signatures against known addresses before trusting signed messages
+- Encrypted messages follow the EIP-5630 standard for ECIES encryption
+- The same shared secret is derived by both sender and recipient for encryption/decryption
 
 ## License
 

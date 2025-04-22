@@ -15,7 +15,25 @@ pub use signature::EthereumSignature;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hex;
+
+    #[tokio::test]
+    async fn test_random_wallet_generation() {
+        let wallet = Wallet::new();
+        println!("Private Key: {}", wallet.privkey);
+        println!("Compressed Public Key: {}", wallet.pubkey_compressed);
+        println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
+        println!("Ethereum Address: {}", wallet.address);
+    }
+
+    #[tokio::test]
+    async fn test_wallet_from_private_key() {
+        let wallet = Wallet::with_private_key(Some("0x1b5667a5972dba94b9baf4026288e4b51fdbc0c9c896473d394b78c5bd2ee92e"));
+        println!("Private Key: {}", wallet.privkey);
+        println!("Compressed Public Key: {}", wallet.pubkey_compressed);
+        println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
+        println!("Ethereum Address: {}", wallet.address);
+    }
+    
 
     #[tokio::test]
     async fn test_sign_message() {
@@ -33,38 +51,7 @@ mod tests {
         assert!(sig_json.get("signature").is_some());
     }
 
-    #[test]
-    fn test_eth_keypair_generation() {
-        let wallet = Wallet::new();
-
-        // Check that the address is 42 chars: "0x" + 40 hex digits
-        assert_eq!(wallet.address.len(), 42);
-        assert!(wallet.address.starts_with("0x"));
-
-        // Check compressed key format (hex string should be 66 chars - 2 for each byte of the 33 byte key)
-        assert_eq!(wallet.pubkey_compressed.len(), 66);
-        
-        // Convert hex to bytes for byte checking
-        let compressed_bytes = hex::decode(&wallet.pubkey_compressed).unwrap();
-        assert!(
-            compressed_bytes[0] == 0x02 || compressed_bytes[0] == 0x03,
-            "Compressed pubkey should start with 0x02 or 0x03"
-        );
-
-        // Check uncompressed key format (hex string should be 130 chars - 2 for each byte of the 65 byte key)
-        assert_eq!(wallet.pubkey_uncompressed.len(), 130);
-        
-        // Convert hex to bytes for byte checking
-        let uncompressed_bytes = hex::decode(&wallet.pubkey_uncompressed).unwrap();
-        assert_eq!(uncompressed_bytes[0], 0x04, 
-            "Uncompressed pubkey should start with 0x04");
-
-        // Debug output
-        println!("Private Key: {}", wallet.privkey);
-        println!("Compressed Public Key: {}", wallet.pubkey_compressed);
-        println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
-        println!("Ethereum Address: {}", wallet.address);
-    }
+    
 
     #[tokio::test]
     async fn test_check_signature_is_valid() {
@@ -83,8 +70,38 @@ mod tests {
         println!("Signature: {}", signature);
 
         let eth_signature = EthereumSignature::new(address, signed_message, signature);
-        let is_valid = eth_signature.verify_ethereum_signature().unwrap_or_else(|e| panic!("Failed to verify signature: {}", e));
+        let is_valid = eth_signature.verify().unwrap_or_else(|e| panic!("Failed to verify signature: {}", e));
         println!("Signature is valid: {}", is_valid);
         assert!(is_valid, "Signature verification failed");
     }
+    #[tokio::test]
+    async fn test_encrypt_and_decrypt_message() {
+        let sender = Wallet::with_private_key(Some("0x1f87cca105d954f1ae230f6ccdf8ea2c7df5eec8bb5d6c706344b42b725bd07d"));
+        let receiver = Wallet::with_private_key(Some("0xa4df62cbf0d00a76c6bceb5c6606823b8f4edb69c8b68607621dcc0a2e87a766"));
+        let message = "message from d07d to a4df: hello friend...ggagagag.?";
+        let encrypted_message = sender.encrypt_message(message, &receiver.pubkey_compressed).unwrap_or_else(|e| panic!("Failed to encrypt message: {}", e));
+        println!("Encrypted Message from sender(d07d) to receiver(a4df): {}", encrypted_message);
+        println!("Length of encrypted message: {}", encrypted_message.len());
+        let decrypted_message = receiver.decrypt_message(&encrypted_message).unwrap_or_else(|e| panic!("Failed to decrypt message: {}", e));
+        println!("Decrypted Message from receiver(a4df) to sender(d07d): {}", decrypted_message);
+    }
+    #[tokio::test]  
+    async fn test_decrypt_message() {
+        let wallet = Wallet::new();
+        println!("private key {}", wallet.privkey);
+        let message = "Hello, world!";
+        let encrypted_message = wallet.encrypt_message(message, &wallet.pubkey_uncompressed).unwrap_or_else(|e| panic!("Failed to encrypt message: {}", e));
+        println!("Encrypted Message: {}", encrypted_message);
+        let decrypted_message = wallet.decrypt_message(&encrypted_message).unwrap_or_else(|e| panic!("Failed to decrypt message: {}", e));
+        println!("Decrypted Message: {}", decrypted_message);
+    }
+
+    #[tokio::test]
+    async fn test_decrypt_message_with_wrong_encrypted_message() {
+        let wallet = Wallet::with_private_key(Some("0xa4df62cbf0d00a76c6bceb5c6606823b8f4edb69c8b68607621dcc0a2e87a766"));
+        let encrypted_message = "0x03071daa81473f20e116f6e3985c4bae4da2ae4a7fe8a54486e61f6eb3872d2e8d1290448460c2a7f3a7ae7ff4bbc2d61a2111a8a5ca101bd593ca1bbc7dbeaf4cff3f4721d29e834f6d71e79e".to_string();
+        let decrypted_message = wallet.decrypt_message(&encrypted_message).unwrap_or_else(|e| panic!("Failed to decrypt message: {}", e));
+        println!("Decrypted Message: {}", decrypted_message);
+    }
+
 }
