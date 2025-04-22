@@ -39,7 +39,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ether-link = "0.0.1"
+ether-link = "0.0.3"
 ```
 
 ## Usage Examples
@@ -55,30 +55,30 @@ Ether-Link enables a simple communication pattern between Ethereum address owner
 ### Generating a New Key Pair
 
 ```rust
-use ether_link::EthKeyPair;
+use ether_link::Wallet;
 
 fn main() {
     // Generate a fresh Ethereum key pair
-    let keypair = EthKeyPair::new();
+    let wallet = Wallet::new();
     
-    println!("Private Key: {}", keypair.privkey);
-    println!("Ethereum Address: {}", keypair.address);
-    println!("Compressed Public Key: {}", keypair.pubkey_compressed);
-    println!("Uncompressed Public Key: {}", keypair.pubkey_uncompressed);
+    println!("Private Key: {}", wallet.privkey);
+    println!("Ethereum Address: {}", wallet.address);
+    println!("Compressed Public Key: {}", wallet.pubkey_compressed);
+    println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
 }
 ```
 
 ### Signing a Message
 
 ```rust
-use ether_link::EthKeyPair;
+use ether_link::Wallet;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let keypair = EthKeyPair::new();
+    let wallet = Wallet::new();
     let message = "Hello, Ethereum!";
     
-    let signature_json = keypair.sign_message(message).await?;
+    let signature_json = wallet.sign_message(message).await?;
     println!("Signature: {}", signature_json);
     
     Ok(())
@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Verifying a Signature
 
 ```rust
-use ether_link::verify_ethereum_signature;
+use ether_link::EthereumSignature;
 use serde_json::Value;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -99,12 +99,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let signed_message = signature_json["signed_message"].as_str().unwrap();
     let signature = signature_json["signature"].as_str().unwrap();
     
-    let is_valid = verify_ethereum_signature(
-        signed_message,
-        signature,
-        address
-    )?;
+    let eth_signature = EthereumSignature::new(
+        address.to_string(),
+        signed_message.to_string(),
+        signature.to_string()
+    );
     
+    let is_valid = eth_signature.verify_ethereum_signature()?;
     println!("Signature is valid: {}", is_valid);
     
     Ok(())
@@ -113,9 +114,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Key Components
 
-- `EthKeyPair`: Core structure for generating and managing Ethereum key pairs
+- `Wallet`: Core structure for generating and managing Ethereum key pairs
 - `sign_message()`: Async method to sign messages with timestamps for security
-- `verify_ethereum_signature()`: Function to verify signed messages against addresses
+- `EthereumSignature`: Structure to verify signed messages against Ethereum addresses
 
 ## Applications
 
