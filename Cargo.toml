@@ -1,6 +1,6 @@
 [package]
 name = "ether-link"
-version = "0.0.5"
+version = "0.1.0"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/bongkow/ether-link"
@@ -8,6 +8,13 @@ description = "lightweight rust library for ethereum communication"
 readme = "README.md"
 keywords = ["ethereum"]
 categories = ["cryptography", "authentication"]
+
+[features]
+default = ["wallet", "signature"]
+wallet = []
+signature = []
+encryption = []
+all = ["wallet", "signature", "encryption"]
 
 [dependencies]
 k256 = { version = "0.13.4", features = ["ecdsa", "ecdh"] }

@@ -813,7 +813,7 @@ dependencies = [
 
 [[package]]
 name = "ether-link"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "ethers",

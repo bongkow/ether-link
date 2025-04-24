@@ -20,11 +20,11 @@ pub struct Wallet {
 impl Wallet {
     // Generate a new Ethereum key pair
     pub fn new() -> Self {
-        Self::with_private_key(None)
+        Self::from_private_key(None)
     }
 
     // Create a wallet from an existing private key or generate a new one if None
-    pub fn with_private_key(private_key_hex: Option<&str>) -> Self {
+    pub fn from_private_key(private_key_hex: Option<&str>) -> Self {
         let private_key = match private_key_hex {
             Some(hex_key) => {
                 // Convert hex string to bytes
@@ -102,9 +102,9 @@ impl Wallet {
     }
     
     // Encrypt a message using EIP-5630 compliant ECIES encryption
-    pub fn encrypt_message(&self, message: &str, recipient_pubkey: &str) -> Result<String, String> {
+    pub fn encrypt_message(&self, message: &str, recipient_compressed_pubkey: &str) -> Result<String, String> {
         // Step 1: Parse the recipient's public key
-        let recipient_pubkey_bytes = hex::decode(recipient_pubkey.trim_start_matches("0x"))
+        let recipient_pubkey_bytes = hex::decode(recipient_compressed_pubkey.trim_start_matches("0x"))
             .map_err(|e| format!("Invalid recipient public key: {}", e))?;
         
         let recipient_public_key = PublicKey::from_sec1_bytes(&recipient_pubkey_bytes)

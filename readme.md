@@ -4,7 +4,7 @@
 [![Documentation](https://docs.rs/ether-link/badge.svg)](https://docs.rs/ether-link)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight Rust library focused on enabling secure communication between Ethereum address owners. Ether-Link provides simple yet powerful tools for Ethereum key management, message signing, and signature verification - allowing Ethereum wallet owners to securely exchange authenticated messages.
+A lightweight Rust library focused on enabling secure communication between Ethereum address owners. Ether-Link provides simple yet powerful tools for Ethereum key management, message signing, signature verification, and end-to-end encryption - allowing Ethereum wallet owners to securely exchange both authenticated and encrypted messages. Using EIP-5630 compliant ECIES encryption, address owners can communicate privately by encrypting messages that only specific Ethereum addresses can decrypt, while maintaining message authenticity through cryptographic signatures.
 
 ## Core Focus
 
@@ -41,7 +41,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ether-link = "0.0.5"
+ether-link = "0.1.0"
 ```
 
 ## Usage Examples
@@ -77,8 +77,9 @@ use ether_link::Wallet;
 
 fn main() {
     // Create a wallet using an existing private key
-    let private_key = "7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d";
-    let wallet = Wallet::with_private_key(Some(private_key));
+    // warning: Do not send anything to the wallet below.
+    let private_key = "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d";
+    let wallet = Wallet::from_private_key(Some(private_key));
     
     println!("Ethereum Address: {}", wallet.address);
     // Should print: 0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b
@@ -110,7 +111,7 @@ use ether_link::Wallet;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wallet = Wallet::new();
     let message = "Secret message for recipient!";
-    let recipient_pubkey = "027a4066efb9f66a65cf5f30c5ccdc7c0cdd9608f699eb3c5da2172ea2f6f579dc"; // Recipient's compressed public key
+    let recipient_pubkey = "0x027a4066efb9f66a65cf5f30c5ccdc7c0cdd9608f699eb3c5da2172ea2f6f579dc"; // Recipient's compressed public key
     
     let encrypted = wallet.encrypt_message(message, recipient_pubkey)?;
     println!("Encrypted: {}", encrypted);
@@ -155,7 +156,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         signature.to_string()
     );
     
-    let is_valid = eth_signature.verify_ethereum_signature()?;
+    let is_valid = eth_signature.verify()?;
     println!("Signature is valid: {}", is_valid);
     
     Ok(())
@@ -166,10 +167,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - `Wallet`: Core structure for generating and managing Ethereum key pairs
 - `new()`: Create a new random wallet
-- `with_private_key()`: Create a wallet from an existing private key
+- `from_private_key()`: Create a wallet from an existing private key
 - `sign_message()`: Async method to sign messages with timestamps for security
-- `encrypt_message()`: Method to encrypt messages for a specific recipient's public key
-- `decrypt_message()`: Method to decrypt messages encrypted for this wallet
+- `encrypt_message()`: Method to encrypt messages using EIP-5630 compliant ECIES (Elliptic Curve Integrated Encryption Scheme) with AES-256-GCM encryption and HKDF key derivation for a specific recipient's public key
+- `decrypt_message()`: Method to decrypt ECIES encrypted messages (EIP-5630) using AES-256-GCM decryption with HKDF key derivation for messages encrypted for this wallet
 - `EthereumSignature`: Structure to verify signed messages against Ethereum addresses
 
 ## Applications
