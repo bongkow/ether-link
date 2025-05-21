@@ -41,7 +41,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ether-link = "0.1.0"
+ether-link = "0.1.1"
 ```
 
 ## Usage Examples
@@ -75,14 +75,16 @@ fn main() {
 ```rust
 use ether_link::Wallet;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a wallet using an existing private key
     // warning: Do not send anything to the wallet below.
     let private_key = "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d";
-    let wallet = Wallet::from_private_key(Some(private_key));
+    let wallet = Wallet::from_private_key(Some(private_key))?;
     
     println!("Ethereum Address: {}", wallet.address);
     // Should print: 0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b
+    
+    Ok(())
 }
 ```
 

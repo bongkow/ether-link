@@ -20,20 +20,20 @@ pub struct Wallet {
 impl Wallet {
     // Generate a new Ethereum key pair
     pub fn new() -> Self {
-        Self::from_private_key(None)
+        Self::from_private_key(None).expect("Failed to generate wallet with random key")
     }
 
     // Create a wallet from an existing private key or generate a new one if None
-    pub fn from_private_key(private_key_hex: Option<&str>) -> Self {
+    pub fn from_private_key(private_key_hex: Option<&str>) -> Result<Self, String> {
         let private_key = match private_key_hex {
             Some(hex_key) => {
                 // Convert hex string to bytes
                 let key_bytes = hex::decode(hex_key.trim_start_matches("0x"))
-                    .expect("Invalid private key format");
+                    .map_err(|e| format!("Invalid private key format: {}", e))?;
                 
                 // Create SigningKey from bytes
                 let secret_key = SecretKey::from_slice(&key_bytes)
-                    .expect("Invalid private key");
+                    .map_err(|e| format!("Invalid private key: {}", e))?;
                 SigningKey::from(secret_key)
             },
             None => {
@@ -56,12 +56,12 @@ impl Wallet {
         let hash = Keccak256::digest(&pubkey_uncompressed[1..]); // remove 0x04 prefix
         let address = format!("0x{}", hex::encode(&hash[12..]));
 
-        Self {
+        Ok(Self {
             address,
             privkey: privkey_hex,
             pubkey_compressed: pubkey_compressed_hex,
             pubkey_uncompressed: pubkey_uncompressed_hex,
-        }
+        })
     }
     // Sign a message with the private key
     pub async fn sign_message(&self, message: &str) -> Result<String, String> {
@@ -78,7 +78,7 @@ impl Wallet {
         let address = &self.address;
         let timestamps = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
+            .map_err(|e| format!("Failed to get system time: {}", e))?
             .as_secs();
         let message_with_timestamp = format!("{}:{}", message, timestamps);
         

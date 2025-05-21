@@ -23,13 +23,29 @@ mod tests {
 
     #[tokio::test]
     async fn test_wallet_from_private_key() {
-        let wallet = Wallet::from_private_key(Some("0x1b5667a5972dba94b9baf4026288e4b51fdbc0c9c896473d394b78c5bd2ee92e"));
+        let wallet = Wallet::from_private_key(Some("0x1b5667a5972dba94b9baf4026288e4b51fdbc0c9c896473d394b78c5bd2ee92e"))
+            .unwrap_or_else(|e| panic!("Failed to create wallet: {}", e));
         println!("Private Key: {}", wallet.privkey);
         println!("Compressed Public Key: {}", wallet.pubkey_compressed);
         println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
         println!("Ethereum Address: {}", wallet.address);
     }
-    
+
+    #[tokio::test]
+    async fn test_wallet_from_private_key_invalid() {
+        match Wallet::from_private_key(Some("0x1b5667a5972dba94b9baf4026288e4b51fdbc0c9c896473d394b78c5bd2ee92")) {
+            Ok(wallet) => {
+                println!("Private Key: {}", wallet.privkey);
+                println!("Compressed Public Key: {}", wallet.pubkey_compressed);
+                println!("Uncompressed Public Key: {}", wallet.pubkey_uncompressed);
+                println!("Ethereum Address: {}", wallet.address);
+            },
+            Err(e) => {
+                println!("Expected error occurred: {}", e);
+                assert!(e.contains("Invalid private key"), "Error message should indicate invalid private key");
+            }
+        }
+    }
 
     #[tokio::test]
     async fn test_sign_message() {
@@ -72,8 +88,10 @@ mod tests {
     }
     #[tokio::test]
     async fn test_encrypt_and_decrypt_message() {
-        let sender = Wallet::from_private_key(Some("0x1f87cca105d954f1ae230f6ccdf8ea2c7df5eec8bb5d6c706344b42b725bd07d"));
-        let receiver = Wallet::from_private_key(Some("0xa4df62cbf0d00a76c6bceb5c6606823b8f4edb69c8b68607621dcc0a2e87a766"));
+        let sender = Wallet::from_private_key(Some("0x1f87cca105d954f1ae230f6ccdf8ea2c7df5eec8bb5d6c706344b42b725bd07d"))
+            .unwrap_or_else(|e| panic!("Failed to create sender wallet: {}", e));
+        let receiver = Wallet::from_private_key(Some("0xa4df62cbf0d00a76c6bceb5c6606823b8f4edb69c8b68607621dcc0a2e87a766"))
+            .unwrap_or_else(|e| panic!("Failed to create receiver wallet: {}", e));
         let message = "message from d07d to a4df: hello friend...ggagagag.?";
         let encrypted_message = sender.encrypt_message(message, &receiver.pubkey_compressed).unwrap_or_else(|e| panic!("Failed to encrypt message: {}", e));
         println!("Encrypted Message from sender(d07d) to receiver(a4df): {}", encrypted_message);
